@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
         referer = 'https://glados.space/console/checkin'
         origin = "https://glados.space"
-        useragent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36"
+        useragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
         payload = {
             'token': 'glados.one'
         }
@@ -85,8 +85,6 @@ if __name__ == '__main__':
         # 推送内容 
         title = f'# 未找到 cookies!'
 
-    print("sckey:", sckey)
-    print("cookies:", cookies)
     
     # 推送消息
     # 未设置 sckey 则不进行推送
