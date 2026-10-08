@@ -1,0 +1,59 @@
+name: Diagnose GLaDOS cookie
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Query account status without checking in
+        env:
+          COOKIES: ${{ secrets.COOKIES }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          cookies = [value.strip() for value in os.environ.get("COOKIES", "").split("&") if value.strip()]
+          if not cookies:
+              raise SystemExit("COOKIES is empty")
+
+          for index, cookie in enumerate(cookies, 1):
+              names = sorted({part.partition("=")[0].strip() for part in cookie.split(";") if "=" in part})
+              summary = {"account_index": index, "cookie_names": names}
+              request = urllib.request.Request(
+                  "https://glados.space/api/user/status",
+                  headers={
+                      "Cookie": cookie,
+                      "Referer": "https://glados.space/console/checkin",
+                      "Origin": "https://glados.space",
+                      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+                  },
+                  method="GET",
+              )
+              try:
+                  try:
+                      response = urllib.request.urlopen(request, timeout=20)
+                  except urllib.error.HTTPError as error:
+                      response = error
+                  with response:
+                      summary["http_status"] = response.status
+                      payload = json.loads(response.read().decode("utf-8"))
+                  if isinstance(payload, dict):
+                      summary["business_code"] = payload.get("code")
+                      summary["response_keys"] = sorted(payload.keys())
+                      data = payload.get("data")
+                      summary["data_is_object"] = isinstance(data, dict)
+                      summary["data_keys"] = sorted(data.keys()) if isinstance(data, dict) else []
+                  else:
+                      summary["error"] = "Response JSON is not an object"
+              except Exception as error:
+                  summary["error_type"] = type(error).__name__
+              print(json.dumps(summary, ensure_ascii=False))
+          PY
